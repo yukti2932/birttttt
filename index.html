@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>An Utterly Scandalous Howler</title>
+    <style>
+        :root {
+            --bridgerton-blue: #7392B7;
+            --gold: #D4AF37;
+            --cream: #FDFBF7;
+            --wisteria: #A89FDF;
+        }
+
+        body {
+            background: radial-gradient(circle, #2b3a4a 0%, #111822 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+            perspective: 1200px;
+        }
+
+        .wisteria-branch {
+            position: absolute;
+            top: 0;
+            width: 300px;
+            height: 200px;
+            background: linear-gradient(135deg, var(--wisteria) 20%, transparent 80%);
+            opacity: 0.3;
+            filter: blur(20px);
+            pointer-events: none;
+        }
+        .left-branch { left: 0; }
+        .right-branch { right: 0; transform: scaleX(-1); }
+
+        .petal {
+            position: absolute;
+            background-color: var(--wisteria);
+            border-radius: 15px 2px 15px 2px;
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 1;
+            animation: float-down 6s linear infinite;
+        }
+
+        .earthquake {
+            animation: screen-quake 0.08s infinite alternate;
+        }
+
+        #canvas {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .howler-container {
+            position: relative;
+            width: 350px;
+            height: 220px;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .shaking {
+            animation: violent-shake 0.1s infinite alternate;
+        }
+
+        .envelope-base {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bridgerton-blue);
+            border: 3px solid var(--gold);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            border-radius: 6px;
+            z-index: 5;
+            transition: opacity 0.5s ease;
+        }
+
+        .envelope-base::before {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            border-bottom: 110px solid #5a7799;
+            border-left: 172px solid transparent;
+            border-right: 172px solid transparent;
+            z-index: 6;
+        }
+
+        .envelope-flap {
+            position: absolute;
+            top: 0; left: 0;
+            width: 0; height: 0;
+            border-top: 110px solid #4a6380;
+            border-left: 172px solid transparent;
+            border-right: 172px solid transparent;
+            transform-origin: top;
+            transition: transform 0.5s ease;
+            z-index: 7;
+            display: flex;
+            justify-content: center;
+        }
+
+        .gold-seal {
+            position: absolute;
+            top: -30px; left: -25px;
+            width: 55px;
+            height: 55px;
+            background: radial-gradient(var(--gold), #aa7c11);
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.6rem;
+            z-index: 8;
+            transition: transform 0.4s ease;
+        }
+
+        .movie-jaw-mouth {
+            position: absolute;
+            width: 320px;
+            height: 240px;
+            display: none;
+            transform-style: preserve-3d;
+            z-index: 10;
+        }
+
+        .jaw {
+            position: absolute;
+            width: 100%;
+            height: 50%;
+            background-color: var(--cream);
+            border: 4px solid var(--bridgerton-blue);
+            box-sizing: border-box;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .jaw-top {
+            top: 0;
+            border-bottom: none;
+            transform-origin: top center;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            background: linear-gradient(to bottom, var(--cream) 70%, #ebdcb9 100%);
+        }
+
+        .jaw-bottom {
+            bottom: 0;
+            border-top: none;
+            transform-origin: bottom center;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            background: linear-gradient(to top, var(--cream) 70%, #ebdcb9 100%);
+        }
+
+        .teeth-row {
+            position: absolute;
+            width: 100%;
+            height: 25px;
+            display: flex;
+            justify-content: space-around;
+        }
+        .jaw-top .teeth-row { bottom: 0; transform: translateY(2px); }
+        .jaw-bottom .teeth-row { top: 0; transform: translateY(-2px) rotateX(180deg); }
+
+        .tooth {
+            width: 0; height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 22px solid #e2cfab;
+        }
+
+        .mouth-backside {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #8b1e1e;
+            z-index: -1;
+            transform: translateZ(-1px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--cream);
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+            border-radius: 6px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .levitate-rise {
+            transform: translateY(-120px) rotateX(15deg) scale(1.1);
+        }
+
+        .snapping-top {
+            animation: snap-top-jaw 0.14s infinite alternate ease-in-out;
+        }
+        .snapping-bottom {
+            animation: snap-bottom-jaw 0.14s infinite alternate ease-in-out;
+        }
+
+        .shred-particle {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-size: cover;
+            background-position: center;
+            border: 2px solid #fff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+            pointer-events: none;
+            z-index: 100;
+            animation: shred-explosion 2.2s forwards cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+
+        .final-screen {
+            text-align: center;
+            display: none;
+            animation: fadeIn 2s forwards;
+            color: var(--cream);
+        }
+        .final-screen h1 { font-family: 'Times New Roman', serif; font-size: 2.2rem; color: var(--gold); letter-spacing: 1px; }
+        .final-screen p { color: #ccc; font-style: italic; }
+
+        @keyframes violent-shake {
+            0% { transform: translate(4px, 5px) rotate(2deg); }
+            100% { transform: translate(-4px, -5px) rotate(-2deg); }
+        }
+        @keyframes screen-quake {
+            0% { transform: translate(3px, 3px); }
+            100% { transform: translate(-3px, -3px); }
+        }
+        @keyframes snap-top-jaw {
+            0% { transform: rotateX(0deg); }
+            100% { transform: rotateX(-65deg); }
+        }
+        @keyframes snap-bottom-jaw {
+            0% { transform: rotateX(0deg); }
+            100% { transform: rotateX(65deg); }
+        }
+        @keyframes float-down {
+            0% { transform: translateY(-50px) translateX(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(105vh) translateX(100px) rotate(360deg); opacity: 0; }
+        }
+        @keyframes shred-explosion {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translate(var(--x), var(--y)) rotate(var(--r)) scale(0.2); opacity: 0; }
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="wisteria-branch left-branch"></div>
+    <div class="wisteria-branch right-branch"></div>
+
+    <div id="canvas">
+        <div class="howler-container shaking" id="howler" onclick="transformToHowler()">
+            <div class="envelope-base" id="envBase">
+                <div class="envelope-flap" id="envFlap">
+                    <div class="gold-seal">🐝</div>
+                </div>
+                <div style="position:absolute; top:130px; width:100%; text-align:center; color:var(--cream); font-size:0.8rem; letter-spacing:4px; z-index:9;">LADY WHISTLEDOWN</div>
+            </div>
+
+            <div class="movie-jaw-mouth" id="movieMouth">
+                <div class="mouth-backside">GENTLE<br>READER!</div>
+                <div class="jaw jaw-top" id="topJaw">
+                    <div class="teeth-row">
+                        <div class="tooth"></div><div class="tooth"></div><div class="tooth"></div>
+                        <div class="tooth"></div><div class="tooth"></div><div class="tooth"></div>
+                    </div>
+                </div>
+                <div class="jaw jaw-bottom" id="bottomJaw">
+                    <div class="teeth-row">
+                        <div class="tooth"></div><div class="tooth"></div><div class="tooth"></div>
+                        <div class="tooth"></div><div class="tooth"></div><div class="tooth"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="final-screen" id="finalScreen">
+            <h1>The Scandal is Concluded.</h1>
+            <p>"The howler ripped itself apart to hide the evidence."</p>
+            <button onclick="location.reload()" style="margin-top:20px; background:var(--gold); border:none; padding:10px 20px; cursor:pointer; font-family:serif; font-weight:bold;">REPLAY SCANDAL</button>
+        </div>
+    </div>
+
+    <audio id="howlerAudio" src="audio.mp3" preload="auto"></audio>
+
+    <script>
+        const howler = document.getElementById('howler');
+        const envBase = document.getElementById('envBase');
+        const envFlap = document.getElementById('envFlap');
+        const movieMouth = document.getElementById('movieMouth');
+        const topJaw = document.getElementById('topJaw');
+        const bottomJaw = document.getElementById('bottomJaw');
+        const audio = document.getElementById('howlerAudio');
+        const finalScreen = document.getElementById('finalScreen');
+
+        function createPetals() {
+            for (let i = 0; i < 20; i++) {
+                let petal = document.createElement('div');
+                petal.classList.add('petal');
+                petal.style.left = Math.random() * window.innerWidth + 'px';
+                petal.style.top = Math.random() * -100 + 'px';
+                petal.style.width = Math.random() * 8 + 6 + 'px';
+                petal.style.height = Math.random() * 14 + 8 + 'px';
+                petal.style.animationDelay = Math.random() * 5 + 's';
+                document.body.appendChild(petal);
+            }
+        }
+        createPetals();
+
+        const yourPhotos = ['1.jpeg', '2.jpeg', '3.jpeg'];
+
+        function transformToHowler() {
+            howler.removeAttribute('onclick');
+
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const audioCtx = new AudioContext();
+                const source = audioCtx.createMediaElementSource(audio);
+                const gainNode = audioCtx.createGain();
+                gainNode.gain.value = 4.0;
+                source.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                audioCtx.resume();
+            } catch(e) { console.log(e); }
+
+            howler.classList.remove('shaking');
+            howler.classList.add('levitate-rise');
+            envFlap.style.transform = 'rotateX(180deg)';
+
+            setTimeout(() => {
+                envBase.style.opacity = '0';
+                movieMouth.style.display = 'block';
+                audio.play().catch(err => {
+                    setTimeout(() => { triggerSelfDestruct(); }, 12000);
+                });
+                document.body.classList.add('earthquake');
+                howler.classList.add('shaking');
+                topJaw.classList.add('snapping-top');
+                bottomJaw.classList.add('snapping-bottom');
+            }, 700);
+        }
+
+        audio.onended = () => { triggerSelfDestruct(); };
+
+        function triggerSelfDestruct() {
+            document.body.classList.remove('earthquake');
+            howler.classList.remove('shaking');
+            topJaw.classList.remove('snapping-top');
+            bottomJaw.classList.remove('snapping-bottom');
+            
+            detonateIntoPhotos();
+
+            howler.style.transform = "scale(0) rotateY(360deg)";
+            howler.style.opacity = "0";
+
+            setTimeout(() => {
+                howler.style.display = 'none';
+                finalScreen.style.display = 'block';
+            }, 1200);
+        }
+
+        function detonateIntoPhotos() {
+            const fragmentCount = 75; 
+            const canvasBounds = document.getElementById('canvas').getBoundingClientRect();
+
+            for (let i = 0; i < fragmentCount; i++) {
+                const shred = document.createElement('div');
+                shred.classList.add('shred-particle');
+                const chosenPhoto = yourPhotos[Math.floor(Math.random() * yourPhotos.length)];
+                shred.style.backgroundImage = `url('${chosenPhoto}')`;
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 180 + Math.random() * 450; 
+                const xDist = Math.cos(angle) * distance;
+                const yDist = Math.sin(angle) * distance + 150; 
+                const randomRotation = (Math.random() * 1000) - 500;
+                shred.style.setProperty('--x', `${xDist}px`);
+                shred.style.setProperty('--y', `${yDist}px`);
+                shred.style.setProperty('--r', `${randomRotation}deg`);
+                shred.style.left = `${canvasBounds.width / 2 - 30}px`;
+                shred.style.top = `${canvasBounds.height / 2 - 30}px`;
+                document.getElementById('canvas').appendChild(shred);
+            }
+        }
+    </script>
+</body>
+</html>
